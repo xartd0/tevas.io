@@ -45,7 +45,7 @@ def get_app() -> FastAPI:
             ],
         )
     app = FastAPI(
-        title="backend",
+        title="TEVA API (dev)",
         version=metadata.version("backend"),
         lifespan=lifespan_setup,
         docs_url=None,

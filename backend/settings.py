@@ -30,6 +30,15 @@ class Settings(BaseSettings):
 
     host: str = "127.0.0.1"
     port: int = 8000
+
+    api_version: str = "v1"
+
+    secret_key: str = "CIsOLKIMErNencErseUbIdeCTaLdnArYPosTen"
+    algorithm: str = "HS256"
+
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+
     # quantity of workers for uvicorn
     workers_count: int = 1
     # Enable uvicorn reloading

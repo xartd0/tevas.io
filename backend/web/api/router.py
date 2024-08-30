@@ -1,8 +1,14 @@
 from fastapi.routing import APIRouter
 
-from backend.web.api import docs, echo, monitoring, redis
+from backend.settings import settings
+from backend.web.api.v1 import docs, monitoring
 
 api_router = APIRouter()
-api_router.include_router(monitoring.router)
-api_router.include_router(docs.router)
-api_router.include_router(echo.router, prefix="/echo", tags=["echo"])
+
+# Применяем версию ко всем маршрутам
+api_router.include_router(
+    monitoring.router,
+    prefix=f"/{settings.api_version}/monitoring",
+    tags=["monitoring"],
+)
+api_router.include_router(docs.router, prefix=f"/{settings.api_version}", tags=["docs"])
