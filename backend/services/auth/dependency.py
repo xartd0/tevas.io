@@ -1,39 +1,87 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Response, Request
 from jose import JWTError
-from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from backend.services.auth.jwt import create_access_token, verify_token
 
-from ..db.dependencies import get_db_session
-from ..db.models.user import User
-from .jwt import verify_token
-
-
-def get_current_user(
-    token: str = Depends(),
-    db: Session = Depends(get_db_session),
-) -> User:
+from backend.db.dependencies import get_db_session
+from backend.db.models.users import User
+from backend.services.auth.crud import get_user_by_id, get_active_refresh_token
+from jose.exceptions import ExpiredSignatureError, JWTError, JWTClaimsError
+async def get_current_user(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    response: Response = None
+):
     """
     Возвращает текущего аутентифицированного пользователя на основе JWT токена.
 
-    :param token: JWT токен, переданный в запросе.
+    :param request: объект запроса.
     :param db: сессия базы данных.
     :returns: пользовательский объект текущего пользователя.
-    :raises: HTTPException с кодом 401, если пользователь не найден или токен недействителен.
+    :raises: HTTPException с кодом 401, если пользователь не найден, токен недействителен или истек.
     """
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No access token provided",
+        )
+
     try:
         payload = verify_token(token)
         user_id = payload.get("sub")
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
+                detail="Could not validate credentials for this user",
             )
+    except ExpiredSignatureError:
+        # Если access token истек, попытаемся обновить его с помощью refresh token
+        try:
+            # Декодируем истекший токен, чтобы получить user_id
+            payload = verify_token(token, False)
+            user_id = payload.get("sub")
+            if user_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Could not validate credentials for this user",
+                )
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+            )
+
+        user = await get_user_by_id(db, user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+
+        refresh_token = await get_active_refresh_token(db, user.id)
+        if not refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token not found or expired",
+            )
+
+        # Обновляем токен доступа
+        new_access_token = create_access_token(user_id=user_id)
+        response.set_cookie(key="access_token", value=new_access_token, httponly=True)  # Устанавливаем куки
+    except JWTClaimsError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token claims",
+        )
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="Invalid token",
         )
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = await get_user_by_id(db, user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

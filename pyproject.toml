@@ -34,6 +34,8 @@ taskiq = "^0"
 taskiq-fastapi = "^0"
     taskiq-redis = "^1"
     pyzmq = "^26"
+python-jose = "^3.3.0"
+passlib = "^1.7.4"
 
 
 [tool.poetry.group.dev.dependencies]

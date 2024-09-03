@@ -1,18 +1,9 @@
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Boolean, BigInteger
+from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.declarative import declarative_base
 import uuid
 from datetime import datetime
-
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-)
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-
 from ..base import Base
 
 
@@ -26,9 +17,11 @@ class User(Base):
     status_id = Column(Integer, default=0)
     last_login_ip = Column(String(20))
     last_login_dt = Column(DateTime)
-    created_dt = Column(DateTime, default=datetime.utcnow)
-    updated_dt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_dt = Column(DateTime, default=datetime.now)
+    updated_dt = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
+    # Связь с RefreshToken
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -36,9 +29,8 @@ class RefreshToken(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     value = Column(String(512), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    is_alive = Column(Boolean, default=True)
     ttl_sec = Column(BigInteger, nullable=False)
-    created_dt = Column(DateTime, default=datetime.utcnow)
-    updated_dt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_dt = Column(DateTime, default=datetime.now)
+    updated_dt = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     user = relationship("User", back_populates="refresh_tokens")

@@ -54,6 +54,8 @@ services:
       interval: 2s
       timeout: 3s
       retries: 40
+    ports:
+      - "5432:5432"  
 
   migrator:
     image: backend:${BACKEND_VERSION:-latest}

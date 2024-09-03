@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError
 
-from ..settings import settings
-
+from backend.settings import settings
+from typing import Dict, Union
 
 def create_access_token(user_id: int, expires_delta: timedelta = None) -> str:
     """
@@ -14,7 +15,7 @@ def create_access_token(user_id: int, expires_delta: timedelta = None) -> str:
     :returns: сгенерированный JWT токен.
     """
     to_encode = {"sub": user_id}
-    expire = datetime.utcnow() + (
+    expire = datetime.now() + (
         expires_delta
         if expires_delta
         else timedelta(minutes=settings.access_token_expire_minutes)
@@ -32,21 +33,22 @@ def create_refresh_token(user_id: int, expires_delta: timedelta = None) -> str:
     :returns: сгенерированный JWT токен обновления.
     """
     to_encode = {"sub": user_id}
-    expire = datetime.utcnow() + (
+    expire = datetime.now() + (
         expires_delta
         if expires_delta
-        else timedelta(days=settings.refresh_token_expire_days)
+        else timedelta(days=expires_delta)
     )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
-def verify_token(token: str) -> dict:
+def verify_token(token: str, verify: bool = True) -> Dict[str, any]:
     """
     Верифицирует JWT токен и декодирует его данные.
 
     :param token: JWT токен для верификации.
     :returns: данные, декодированные из токена.
+    :raises: ExpiredSignatureError, если токен истек.
     :raises: JWTError, если токен недействителен.
     """
     try:
@@ -54,7 +56,12 @@ def verify_token(token: str) -> dict:
             token,
             settings.secret_key,
             algorithms=[settings.algorithm],
+            options={"verify_exp": verify},
         )
         return payload
+    except ExpiredSignatureError:
+        raise ExpiredSignatureError("Token has expired")
+    except JWTClaimsError as e:
+        raise JWTError(f"Invalid token claims: {e}")
     except JWTError as e:
-        raise JWTError(f"Token validation error: {e}")
+        raise JWTError(f"Invalid token: {e}")

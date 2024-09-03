@@ -36,8 +36,8 @@ class Settings(BaseSettings):
     secret_key: str = "CIsOLKIMErNencErseUbIdeCTaLdnArYPosTen"
     algorithm: str = "HS256"
 
-    access_token_expire_minutes: int = 30
-    refresh_token_expire_days: int = 7
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 180
 
     # quantity of workers for uvicorn
     workers_count: int = 1
@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     db_port: int = 5432
     db_user: str = "backend"
     db_pass: str = "backend"
-    db_base: str = "admin"
+    db_base: str = "backend"
     db_echo: bool = False
 
     # Variables for Redis

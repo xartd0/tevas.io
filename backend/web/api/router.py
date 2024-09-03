@@ -1,7 +1,7 @@
 from fastapi.routing import APIRouter
 
 from backend.settings import settings
-from backend.web.api.v1 import docs, monitoring
+from backend.web.api.v1 import docs, monitoring, user
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(
     tags=["monitoring"],
 )
 api_router.include_router(docs.router, prefix=f"/{settings.api_version}", tags=["docs"])
+api_router.include_router(user.router, prefix=f"/{settings.api_version}/user", tags=["user"])
