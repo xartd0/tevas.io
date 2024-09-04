@@ -11,8 +11,20 @@ from backend.services.auth.utils import (
     create_and_store_refresh_token,
 )
 from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate
-from backend.services.auth.crud import get_user_by_login, create_user, get_user_by_id
+from backend.services.auth.crud import (
+    get_user_by_login,
+    create_user,
+    get_user_by_id,
+    get_verification_code,
+    create_verification_code,
+    update_user_status,
+    update_user_password,
+    get_user_by_email
+)
 from backend.services.auth.dependency import get_current_user
+from backend.services.auth.mail import send_reset_password_email, send_verification_email
+from backend.services.auth.utils import generate_verification_code
+from datetime import datetime
 
 router = APIRouter()
 
@@ -33,15 +45,18 @@ async def login_user(
     :param db: сессия базы данных.
     :returns: JWT токены доступа и обновления.
     """
-    user_id = await authenticate_user(db, form_data.username, form_data.password)
-    if user_id is None:
+    user = await authenticate_user(db, form_data.username, form_data.password)
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
 
-    access_token = create_access_token(user_id=str(user_id))
-    await create_and_store_refresh_token(user_id=str(user_id), db=db)
+    user.last_login_dt = datetime.now()
+    await db.commit()
+
+    access_token = create_access_token(user_id=str(user.id))
+    await create_and_store_refresh_token(user_id=str(user.id), db=db)
 
     response.set_cookie(key="access_token", value=access_token, httponly=True)
 
@@ -56,25 +71,9 @@ async def get_current_user_info(
 
     return current_user
 
-@router.put("/me", response_model=UserResponse)
-async def update_user_settings(
-    user_update: UserUpdate,
-    current_user = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
-):
-    """
-    Изменение настроек для текущего пользователя.
-
-    :param user_update: схема обновления пользователя.
-    :param current_user: текущий пользователь.
-    :param db: сессия базы данных.
-    :returns: обновленный пользователь.
-    """
-    return await update_user(db, current_user, user_update)
 
 @router.get("/{id}", response_model=UserResponse)
 async def get_user_info(
-    request: Request,
     id: UUID, 
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -85,11 +84,106 @@ async def get_user_info(
     :param db: сессия базы данных.
     :returns: данные пользователя.
     """
-    user = get_user_by_id(db, id)
+    user = await get_user_by_id(db, id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
+@router.put("/settings", response_model=UserResponse)
+async def update_user_settings(
+    user_update: UserUpdate,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Обновление настроек пользователя.
+
+    Позволяет пользователю изменить логин, email или пароль.
+    Для изменения email и пароля требуется подтверждение.
+
+    :param user_update: схема с данными для обновления пользователя.
+    :param current_user: текущий авторизованный пользователь.
+    :param db: сессия базы данных.
+    :returns: обновленные данные пользователя.
+    """
+    # Check if the login is being updated and if it is unique
+    if user_update.login and user_update.login != current_user.login:
+        existing_user = await get_user_by_login(db, user_update.login)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this login already exists",
+            )
+        current_user.login = user_update.login
+
+    # Update email with confirmation
+    if user_update.email and user_update.email != current_user.email:
+        existing_user = await get_user_by_email(db, user_update.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this email already exists",
+            )
+        # Send confirmation code to new email
+        code = generate_verification_code()
+        await create_verification_code(db, current_user.id, code)
+        await send_verification_email(user_update.email, code)
+
+        # Email is updated only after confirmation, we return message for that.
+        return {"message": "Confirmation code sent to the new email. Update email by confirming the code."}
+
+    # Update password with confirmation
+    if user_update.password and user_update.current_password:
+        # Authenticate the current password
+        user_id = await authenticate_user(db, current_user.login, user_update.current_password)
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid current password",
+            )
+        # Ensure new password confirmation matches
+        if user_update.password != user_update.password_confirm:
+            raise HTTPException(status_code=400, detail="Passwords do not match")
+
+        # Update password
+        await update_user_password(db, current_user, user_update.password)
+
+    # Persist other changes (like login)
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+
+    return current_user
+
+
+@router.post("/settings/email/confirm")
+async def confirm_new_email(
+    code: str,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Подтверждение нового email пользователя.
+
+    :param code: код подтверждения, отправленный на новый email.
+    :param current_user: текущий авторизованный пользователь.
+    :param db: сессия базы данных.
+    :returns: сообщение об успешной верификации.
+    :raises: HTTPException с кодом 400, если код неверен или истек.
+    """
+    # Проверка верификационного кода
+    verification_code = await get_verification_code(db, current_user.id, code)
+    if not verification_code:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+
+    # Обновление email пользователя
+    current_user.email = verification_code.email  # предполагаем, что код хранит новый email
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+
+    return {"message": "Email updated successfully"}
 
 
 @router.post("", response_model=UserCreate, status_code=status.HTTP_201_CREATED)
@@ -116,3 +210,76 @@ async def register_user(
 
     user = await create_user(db, user_create, ip)
     return user
+
+
+
+@router.post("/verify/send")
+async def send_verification_code(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Отправляет код верификации на email текущего пользователя.
+    """
+    code = generate_verification_code()
+    await create_verification_code(db, current_user.id, code)
+    await send_verification_email(current_user.email, code)
+    return {"message": "Verification code sent"}
+
+@router.post("/verify")
+async def verify_user(
+    code: str,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Подтверждает верификацию пользователя по коду.
+    """
+    verification_code = await get_verification_code(db, current_user.id, code)
+    if not verification_code:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+
+    await update_user_status(db, current_user, status_id=1)
+    return {"message": "User verified"}
+
+@router.post("/password/reset/send")
+async def send_reset_password_code(
+    email: str,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Отправляет код для сброса пароля на email пользователя.
+    """
+    user = await get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    code = generate_verification_code()
+    await create_verification_code(db, user.id, code)
+    await send_reset_password_email(user.email, code)
+    return {"message": "Reset password code sent"}
+
+@router.post("/password/reset")
+async def reset_password(
+    email: str,
+    code: str,
+    new_password: str,
+    new_password_confirm: str,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Сбрасывает пароль пользователя по коду.
+    """
+    if new_password != new_password_confirm:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+
+    user = await get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    reset_code = await get_verification_code(db, user.id, code)
+    if not reset_code:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+
+    await update_user_password(db, user, new_password)
+    return {"message": "Password reset successful"}

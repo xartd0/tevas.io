@@ -8,7 +8,8 @@ from .jwt import create_refresh_token
 from .crud import get_user_by_login, get_active_refresh_token
 from .password import verify_password
 from backend.settings import settings
-
+import random
+import string
 
 async def authenticate_user(db: AsyncSession, username: str, password: str) -> int:
     """
@@ -33,7 +34,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> i
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
-    return user.id
+    return user
 
 
 
@@ -71,3 +72,13 @@ async def create_and_store_refresh_token(user_id: int, db: AsyncSession) -> str:
         )
 
     return refresh_token_value
+
+
+def generate_verification_code(length=6) -> str:
+    """
+    Генерирует случайный код для верификации.
+
+    :param length: Длина кода.
+    :return: Сгенерированный код.
+    """
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
