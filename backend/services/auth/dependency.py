@@ -8,6 +8,7 @@ from backend.db.dependencies import get_db_session
 from backend.db.models.users import User
 from backend.services.auth.crud import get_user_by_id, get_active_refresh_token
 from jose.exceptions import ExpiredSignatureError, JWTError, JWTClaimsError
+
 async def get_current_user(
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -70,11 +71,13 @@ async def get_current_user(
         # Обновляем токен доступа
         new_access_token = create_access_token(user_id=user_id)
         response.set_cookie(key="access_token", value=new_access_token, httponly=True)  # Устанавливаем куки
+        
     except JWTClaimsError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token claims",
         )
+    
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -86,6 +89,12 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
+        )
+        
+    if user.status_id == -1:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is banned",
         )
 
     return user

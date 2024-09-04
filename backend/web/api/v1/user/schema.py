@@ -7,14 +7,26 @@ class UserCreate(BaseModel):
     """
     Модель для создания пользователя.
     """
+    first_name: str
+    last_name: str
     login: str
     email: EmailStr
     password: str
-    team_id: Optional[UUID]
+    team_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True  
-        
+
+class UserLogin(BaseModel):
+    """
+    Модель для авторизации пользователя.
+    """
+    login: str
+    password: str
+
+    class Config:
+        from_attributes = True  
+         
 
 
 class UserResponse(BaseModel):

@@ -10,7 +10,7 @@ from backend.services.auth.utils import (
     authenticate_user,
     create_and_store_refresh_token,
 )
-from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate
+from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin
 from backend.services.auth.crud import (
     get_user_by_login,
     create_user,
@@ -19,7 +19,8 @@ from backend.services.auth.crud import (
     create_verification_code,
     update_user_status,
     update_user_password,
-    get_user_by_email
+    get_user_by_email,
+    get_user_by_code
 )
 from backend.services.auth.dependency import get_current_user
 from backend.services.auth.mail import send_reset_password_email, send_verification_email
@@ -34,7 +35,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/auth")
 
 @router.post("/auth")
 async def login_user(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: UserLogin = Depends(),
     db: AsyncSession = Depends(get_db_session),
     response: Response = Response()
 ):
@@ -45,7 +46,7 @@ async def login_user(
     :param db: сессия базы данных.
     :returns: JWT токены доступа и обновления.
     """
-    user = await authenticate_user(db, form_data.username, form_data.password)
+    user = await authenticate_user(db, form_data.login, form_data.password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -126,7 +127,7 @@ async def update_user_settings(
                 detail="User with this email already exists",
             )
         # Send confirmation code to new email
-        code = generate_verification_code()
+        code = await generate_verification_code(db=db)
         await create_verification_code(db, current_user.id, code)
         await send_verification_email(user_update.email, code)
 
@@ -221,7 +222,7 @@ async def send_verification_code(
     """
     Отправляет код верификации на email текущего пользователя.
     """
-    code = generate_verification_code()
+    code = await generate_verification_code(db=db)
     await create_verification_code(db, current_user.id, code)
     await send_verification_email(current_user.email, code)
     return {"message": "Verification code sent"}
@@ -254,26 +255,22 @@ async def send_reset_password_code(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    code = generate_verification_code()
+    code = await generate_verification_code(db=db)
     await create_verification_code(db, user.id, code)
     await send_reset_password_email(user.email, code)
     return {"message": "Reset password code sent"}
 
 @router.post("/password/reset")
 async def reset_password(
-    email: str,
     code: str,
     new_password: str,
-    new_password_confirm: str,
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Сбрасывает пароль пользователя по коду.
     """
-    if new_password != new_password_confirm:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
 
-    user = await get_user_by_email(db, email)
+    user = await get_user_by_code(db, code)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

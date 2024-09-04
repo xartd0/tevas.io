@@ -26,6 +26,8 @@ async def create_user(db: AsyncSession, user_create: UserCreate, ip: str) -> Use
     user = User(
         login=user_create.login,
         email=user_create.email,
+        first_name=user_create.first_name,
+        last_name=user_create.last_name,
         password=get_password_hash(user_create.password),
         last_login_ip=ip,
         last_login_dt=datetime.now(),
@@ -196,6 +198,21 @@ async def get_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str)
     )
     return result.scalar_one_or_none()
 
+
+async def check_verification_code_exist(db: AsyncSession, code: str) -> UserVerificationCode:
+    """
+    Проверяет, существует ли код верификации в базе данных.
+
+    :param db: Сессия базы данных.
+    :param code: Код верификации.
+    """
+    result = await db.execute(
+        select(UserVerificationCode)
+        .filter(UserVerificationCode.code == code)
+    )
+    return result.scalar_one_or_none()
+
+
 async def update_user_status(db: AsyncSession, user: User, status_id: int):
     """
     Обновляет статус пользователя.
@@ -217,3 +234,18 @@ async def update_user_password(db: AsyncSession, user: User, new_password: str):
     """
     user.password = new_password  # Добавьте хэширование пароля, если нужно
     await db.commit()
+
+async def get_user_by_code(db: AsyncSession, code: str) -> User:
+    """
+    Получает пользователя по коду верификации.
+
+    :param db: Сессия базы данных.
+    :param code: Код верификации.
+    :return: Объект User или None, если пользователь не найден.
+    """
+    result = await db.execute(
+        select(User)
+        .join(UserVerificationCode)
+        .filter(UserVerificationCode.code == code)
+    )
+    return result.scalar_one_or_none()

@@ -5,24 +5,27 @@ from sqlalchemy.future import select
 from backend.db.models.users import User, RefreshToken
 from datetime import timedelta
 from .jwt import create_refresh_token
-from .crud import get_user_by_login, get_active_refresh_token
+from .crud import get_user_by_login, get_active_refresh_token, get_user_by_email, check_verification_code_exist
 from .password import verify_password
 from backend.settings import settings
 import random
 import string
 
-async def authenticate_user(db: AsyncSession, username: str, password: str) -> int:
+async def authenticate_user(db: AsyncSession, login: str, password: str) -> int:
     """
     Аутентифицирует пользователя на основе его логина и пароля.
 
     :param db: сессия базы данных.
-    :param username: логин пользователя.
+    :param username: логин или email пользователя.
     :param password: пароль пользователя.
     :returns: идентификатор пользователя, если аутентификация успешна.
     :raises: HTTPException, если аутентификация не удалась.
     """
     try:
-        user = await get_user_by_login(db, login=username)
+        if "@" in login:
+            user = await get_user_by_email(db, email=login)
+        else:
+            user = await get_user_by_login(db, login=login)
     except SQLAlchemyError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -74,11 +77,15 @@ async def create_and_store_refresh_token(user_id: int, db: AsyncSession) -> str:
     return refresh_token_value
 
 
-def generate_verification_code(length=6) -> str:
+async def generate_verification_code(db: AsyncSession, length=6) -> str:
     """
     Генерирует случайный код для верификации.
 
     :param length: Длина кода.
+    :param db: сессия базы данных.
     :return: Сгенерированный код.
     """
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+    if await check_verification_code_exist(db, code):
+        return await generate_verification_code(length, db)
+    return code
