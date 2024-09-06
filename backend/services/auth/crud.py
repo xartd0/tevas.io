@@ -232,7 +232,7 @@ async def update_user_password(db: AsyncSession, user: User, new_password: str):
     :param user: Объект User.
     :param new_password: Новый пароль пользователя.
     """
-    user.password = new_password  # Добавьте хэширование пароля, если нужно
+    user.password = get_password_hash(new_password) # Добавьте хэширование пароля, если нужно
     await db.commit()
 
 async def get_user_by_code(db: AsyncSession, code: str) -> User:
