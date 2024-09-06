@@ -128,7 +128,7 @@ async def update_user_settings(
             )
         # Send confirmation code to new email
         code = await generate_verification_code(db=db)
-        await create_verification_code(db, current_user.id, code)
+        await create_verification_code(db, current_user.id, code, email=user_update.email)
         await send_verification_email(user_update.email, code)
 
         # Email is updated only after confirmation, we return message for that.
