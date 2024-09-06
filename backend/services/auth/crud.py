@@ -146,7 +146,7 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User:
     result = await db.execute(select(User).filter(User.email == email))
     return result.scalar_one_or_none()
 
-async def create_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str) -> UserVerificationCode:
+async def create_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str, email: str) -> UserVerificationCode:
     """
     Создает или обновляет код верификации для пользователя. 
 
@@ -168,11 +168,11 @@ async def create_verification_code(db: AsyncSession, user_id: uuid.UUID, code: s
         await db.execute(
             update(UserVerificationCode)
             .where(UserVerificationCode.user_id == user_id)
-            .values(code=code)
+            .values(code=code, email=email)
         )
     else:
         # Создаем новую запись с кодом
-        new_verification_code = UserVerificationCode(user_id=user_id, code=code)
+        new_verification_code = UserVerificationCode(user_id=user_id, code=code, email=email)
         db.add(new_verification_code)
 
     await db.commit()
