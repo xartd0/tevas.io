@@ -150,6 +150,14 @@ async def update_user_settings(
         # Update password
         await update_user_password(db, current_user, user_update.password)
 
+
+    # Update first_name and last_name
+    if user_update.first_name and user_update.first_name != current_user.first_name:
+        current_user.first_name = user_update.first_name
+        
+    if user_update.last_name and user_update.last_name != current_user.last_name:
+        current_user.last_name = user_update.last_name
+
     # Persist other changes (like login)
     db.add(current_user)
     await db.commit()

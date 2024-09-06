@@ -45,6 +45,11 @@ class UserUpdate(BaseModel):
     Модель для обновления данных пользователя.
     """
     login: str
+    email: str
+    password: str
+    current_password: str
+    first_name: str
+    last_name: str
 
     class Config:
         from_attributes = True  
@@ -60,6 +65,8 @@ class UserResponse(BaseModel):
     status_id: int
     last_login_ip: Optional[str]
     last_login_dt: Optional[datetime]
+    first_name: str
+    last_name: str
     created_dt: datetime
     updated_dt: datetime
 

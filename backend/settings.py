@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str] = None
     sentry_sample_rate: float = 1.0
 
-    MAIL_SERVER: str = "mail.tevas.io"
+    MAIL_SERVER: str = "147.45.143.110"
     MAIL_PORT: int = 587
     MAIL_USERNAME: str = "noreply@tevas.io"
     MAIL_PASSWORD: str = "ose7mgpose74g"
