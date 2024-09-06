@@ -143,9 +143,6 @@ async def update_user_settings(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid current password",
             )
-        # Ensure new password confirmation matches
-        if user_update.password != user_update.password_confirm:
-            raise HTTPException(status_code=400, detail="Passwords do not match")
 
         # Update password
         await update_user_password(db, current_user, user_update.password)
