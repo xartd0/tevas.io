@@ -194,7 +194,7 @@ async def get_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str)
         select(UserVerificationCode)
         .filter(UserVerificationCode.user_id == user_id)
         .filter(UserVerificationCode.code == code)
-        .filter(UserVerificationCode.created_at > expiration_time)
+        .filter(UserVerificationCode.created_dt > expiration_time)
     )
     return result.scalar_one_or_none()
 
