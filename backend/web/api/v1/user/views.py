@@ -91,7 +91,7 @@ async def get_user_info(
     return user
 
 
-@router.put("/settings", response_model=UserResponse)
+@router.put("/settings")
 async def update_user_settings(
     user_update: UserUpdate,
     current_user = Depends(get_current_user),
@@ -154,7 +154,7 @@ async def update_user_settings(
     # Update first_name and last_name
     if user_update.first_name and user_update.first_name != current_user.first_name:
         current_user.first_name = user_update.first_name
-        
+
     if user_update.last_name and user_update.last_name != current_user.last_name:
         current_user.last_name = user_update.last_name
 
