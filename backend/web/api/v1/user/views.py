@@ -10,7 +10,7 @@ from backend.services.auth.utils import (
     authenticate_user,
     create_and_store_refresh_token,
 )
-from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin
+from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin, VerificationCode
 from backend.services.auth.crud import (
     get_user_by_login,
     create_user,
@@ -35,7 +35,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/auth")
 
 @router.post("/auth")
 async def login_user(
-    form_data: UserLogin = Depends(),
+    form_data: UserLogin,
     db: AsyncSession = Depends(get_db_session),
     response: Response = Response()
 ):
@@ -234,14 +234,14 @@ async def send_verification_code(
 
 @router.post("/verify")
 async def verify_user(
-    code: str,
+    code: VerificationCode,
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Подтверждает верификацию пользователя по коду.
     """
-    verification_code = await get_verification_code(db, current_user.id, code)
+    verification_code = await get_verification_code(db, current_user.id, code.code)
     if not verification_code:
         raise HTTPException(status_code=400, detail="Invalid or expired code")
 

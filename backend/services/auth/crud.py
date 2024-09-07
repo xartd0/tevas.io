@@ -196,7 +196,13 @@ async def get_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str)
         .filter(UserVerificationCode.code == code)
         .filter(UserVerificationCode.updated_dt > expiration_time)
     )
-    return result.scalar_one_or_none()
+    verification_code = result.scalar_one_or_none()
+
+    if verification_code:
+        await db.delete(verification_code)
+        await db.commit()
+
+    return verification_code
 
 
 async def check_verification_code_exist(db: AsyncSession, code: str) -> UserVerificationCode:

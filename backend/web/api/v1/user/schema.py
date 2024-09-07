@@ -14,8 +14,6 @@ class UserCreate(BaseModel):
     password: str
     team_id: Optional[UUID] = None
 
-    class Config:
-        from_attributes = True  
 
 class UserLogin(BaseModel):
     """
@@ -23,9 +21,6 @@ class UserLogin(BaseModel):
     """
     login: str
     password: str
-
-    class Config:
-        from_attributes = True  
          
 
 
@@ -51,9 +46,6 @@ class UserUpdate(BaseModel):
     first_name: str
     last_name: str
 
-    class Config:
-        from_attributes = True  
-
 
 class UserResponse(BaseModel):
     """
@@ -73,3 +65,6 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True  
 
+
+class VerificationCode(BaseModel):
+    code: str
