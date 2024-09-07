@@ -93,7 +93,7 @@ async def get_user_info(
 
 @router.put("/settings")
 async def update_user_settings(
-    user_update: UserUpdate,
+    user_update: UserResponse,
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
 ):
