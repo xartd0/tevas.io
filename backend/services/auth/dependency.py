@@ -96,5 +96,11 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is banned",
         )
+    
+    if user.status_id == 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not verified",
+        )
 
     return user
