@@ -77,6 +77,7 @@ async def get_current_user_info(
 async def get_user_info(
     id: UUID, 
     db: AsyncSession = Depends(get_db_session),
+    current_user = Depends(get_current_user)
 ):
     """
     Получение информации о пользователе по ID.
@@ -192,7 +193,7 @@ async def confirm_new_email(
     return {"message": "Email updated successfully"}
 
 
-@router.post("", response_model=UserCreate, status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_create: UserCreate,
     request: Request,
@@ -214,8 +215,7 @@ async def register_user(
             detail="User with this login already exists",
         )
 
-    user = await create_user(db, user_create, ip)
-    return user
+    return {"message": "Registration successful"}
 
 
 
