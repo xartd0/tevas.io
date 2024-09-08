@@ -5,6 +5,7 @@ from pathlib import Path
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.responses import UJSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -52,6 +53,15 @@ def get_app() -> FastAPI:
         redoc_url=None,
         openapi_url="/api/openapi.json",
         default_response_class=UJSONResponse,
+    )
+
+    # Настройка CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Разрешить все источники
+        allow_credentials=True,
+        allow_methods=["*"],  # Разрешить все методы
+        allow_headers=["*"],  # Разрешить все заголовки
     )
 
     # Main router for the API.
