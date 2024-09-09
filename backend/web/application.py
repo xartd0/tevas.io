@@ -15,6 +15,8 @@ from backend.log import configure_logging
 from backend.settings import settings
 from backend.web.api.router import api_router
 from backend.web.lifespan import lifespan_setup
+from backend.exceptions.main import validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 
 APP_ROOT = Path(__file__).parent.parent
 
@@ -54,6 +56,8 @@ def get_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         default_response_class=UJSONResponse,
     )
+
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     # Настройка CORS
     app.add_middleware(
