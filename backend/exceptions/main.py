@@ -23,7 +23,7 @@ async def validation_exception_handler(
             "detail": "Validation Error",
             "errors": [
                 {
-                    "field": error["loc"][1:],
+                    "field": error["loc"][1],
                     "msg": error["msg"],
                     "type": error["type"]
                 }
