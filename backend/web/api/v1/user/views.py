@@ -208,11 +208,17 @@ async def register_user(
     :raises: HTTPException с кодом 400, если пользователь с таким логином или email уже существует.
     """
     ip = request.client.host 
-    existing_user = await get_user_by_login(db, user_create.login)
-    if existing_user:
+    existing_login = await get_user_by_login(db, user_create.login)
+    if existing_login:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User with this login already exists",
+        )
+    existing_email = await get_user_by_email(db, user_create.email)
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists",
         )
 
     return {"message": "Registration successful"}
