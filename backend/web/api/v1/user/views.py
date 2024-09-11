@@ -222,9 +222,11 @@ async def register_user(
             detail="User with this email already exists",
         )
     
-    await create_user(db, user_create, ip)
+    new_user = await create_user(db, user_create, ip)
 
-    return {"message": "Registration successful"}
+    access_token = create_access_token(user_id=str(new_user.id))
+
+    return {"message": "Registration successful", "access_token": access_token}
 
 
 
