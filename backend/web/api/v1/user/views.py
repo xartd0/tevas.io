@@ -215,11 +215,14 @@ async def register_user(
             detail="User with this login already exists",
         )
     existing_email = await get_user_by_email(db, user_create.email)
+
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User with this email already exists",
         )
+    
+    await create_user(db, user_create, ip)
 
     return {"message": "Registration successful"}
 
