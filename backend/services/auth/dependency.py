@@ -16,7 +16,7 @@ async def get_current_user(
 ):
     
     verify = False
-    if request.url.path.startswith("/api/v1/user/verify/"):
+    if request.url.path.startswith("/api/v1/user/verify"):
         verify = True
 
     """

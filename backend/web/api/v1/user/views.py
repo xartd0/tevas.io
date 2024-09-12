@@ -32,7 +32,6 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/auth")
 
 
-
 @router.post("/auth")
 async def login_user(
     form_data: UserLogin,
@@ -59,7 +58,7 @@ async def login_user(
     access_token = create_access_token(user_id=str(user.id))
     await create_and_store_refresh_token(user_id=str(user.id), db=db)
 
-    response.set_cookie(key="access_token", value=access_token, httponly=True)
+    response.set_cookie(key="access_token", value=access_token, httponly=False, samesite="None", secure=False, max_age=60)
 
     return {"message": "Login successful"}
 
