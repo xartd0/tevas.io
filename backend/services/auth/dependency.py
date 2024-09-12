@@ -75,7 +75,14 @@ async def get_current_user(
 
         # Обновляем токен доступа
         new_access_token = create_access_token(user_id=user_id)
-        response.set_cookie(key="access_token", value=new_access_token, httponly=True)  # Устанавливаем куки
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            max_age=60,
+            samesite="None",  # Для кросс-доменных запросов
+            secure=False,  # Поставь True, если используешь HTTPS
+        )
+
         
     except JWTClaimsError:
         raise HTTPException(
