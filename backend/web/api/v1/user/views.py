@@ -61,7 +61,6 @@ async def login_user(
     response.set_cookie(
         key="access_token",
         value=access_token,
-        httponly=True,
         max_age=60,
         samesite="None",  # Для кросс-доменных запросов
         secure=False,  # Поставь True, если используешь HTTPS
