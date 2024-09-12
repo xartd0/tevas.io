@@ -23,7 +23,6 @@ class UserLogin(BaseModel):
     password: str
          
 
-
 class UserResponse(BaseModel):
     """
     Модель для создания пользователя.

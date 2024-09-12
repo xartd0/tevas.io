@@ -4,7 +4,8 @@ from jose import JWTError, jwt
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError
 
 from backend.settings import settings
-from typing import Dict, Union
+from typing import Dict
+
 
 def create_access_token(user_id: int, expires_delta: timedelta = None) -> str:
     """
