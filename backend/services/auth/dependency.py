@@ -14,6 +14,11 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db_session),
     response: Response = None
 ):
+    
+    verify = False
+    if request.url.path.startswith("/api/v1/user/verify/"):
+        verify = True
+
     """
     Возвращает текущего аутентифицированного пользователя на основе JWT токена.
 
@@ -97,7 +102,7 @@ async def get_current_user(
             detail="User is banned",
         )
     
-    if user.status_id == 0:
+    if user.status_id == 0 and not verify:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is not verified",
