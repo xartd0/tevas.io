@@ -7,6 +7,7 @@ from backend.services.auth.jwt import create_access_token, verify_token
 from backend.db.dependencies import get_db_session
 from backend.db.models.users import User
 from backend.services.auth.crud import get_user_by_id, get_active_refresh_token
+from backend.services.auth.utils import set_cookie_custom
 from jose.exceptions import ExpiredSignatureError, JWTError, JWTClaimsError
 
 async def get_current_user(
@@ -76,13 +77,7 @@ async def get_current_user(
 
         # Обновляем токен доступа
         new_access_token = create_access_token(user_id=user_id)
-        response.set_cookie(
-            key="access_token",
-            value=new_access_token,
-            max_age=60,
-            samesite="None",  # Для кросс-доменных запросов
-            secure=False,  # Поставь True, если используешь HTTPS
-        )
+        set_cookie_custom(new_access_token, response)
 
         
     except JWTClaimsError:

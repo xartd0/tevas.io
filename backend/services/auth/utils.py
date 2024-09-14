@@ -89,3 +89,15 @@ async def generate_verification_code(db: AsyncSession, length=6) -> str:
     if await check_verification_code_exist(db, code):
         return await generate_verification_code(length, db)
     return code
+
+
+async def set_cookie_custom(access_token: str, response) -> bool:
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        samesite="None",  # Для кросс-доменных запросов
+        secure=False,  # Поставь True, если используешь HTTPS
+    )
+
+    return True

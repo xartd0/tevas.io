@@ -24,7 +24,7 @@ from backend.services.auth.crud import (
 )
 from backend.services.auth.dependency import get_current_user
 from backend.services.auth.mail import send_reset_password_email, send_verification_email
-from backend.services.auth.utils import generate_verification_code
+from backend.services.auth.utils import generate_verification_code, set_cookie_custom
 from datetime import datetime
 
 router = APIRouter()
@@ -58,14 +58,7 @@ async def login_user(
     access_token = create_access_token(user_id=str(user.id))
     await create_and_store_refresh_token(user_id=str(user.id), db=db)
 
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        max_age=60,
-        samesite="None",  # Для кросс-доменных запросов
-        secure=False,  # Поставь True, если используешь HTTPS
-    )
-
+    set_cookie_custom(access_token, response)
 
     return {"message": "Login successful"}
 
