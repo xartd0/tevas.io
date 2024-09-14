@@ -17,9 +17,8 @@ async def get_current_user(
 ):
     
     verify = False
-    if "verify" in request.url.path:
+    if request.url.path.startswith("/api/v1/user/verify"):
         verify = True
-    print(verify)
 
     """
     Возвращает текущего аутентифицированного пользователя на основе JWT токена.
