@@ -34,16 +34,17 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True  
 
+
 class UserUpdate(BaseModel):
     """
     Модель для обновления данных пользователя.
     """
-    login: str
-    email: str
-    password: str
-    current_password: str
-    first_name: str
-    last_name: str
+    login: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+    current_password: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
 class UserResponse(BaseModel):

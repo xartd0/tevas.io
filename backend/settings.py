@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     MAIL_PORT: int = 587
     MAIL_USERNAME: str = "noreply@tevas.io"
     MAIL_PASSWORD: str = "ose7mgpose74g"
-    EMAIL_FROM: str = "noreply@tevas.io"
+    EMAIL_FROM: str = "TEVAS.IO"
 
     @property
     def db_url(self) -> URL:

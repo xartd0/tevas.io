@@ -147,7 +147,7 @@ async def update_user_settings(
         # Update password
         await update_user_password(db, current_user, user_update.password)
 
-
+   
     # Update first_name and last_name
     if user_update.first_name and user_update.first_name != current_user.first_name:
         current_user.first_name = user_update.first_name
