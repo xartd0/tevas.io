@@ -18,13 +18,16 @@ class User(Base):
     password = Column(String(128), nullable=False)
     status_id = Column(Integer, default=0)
     last_login_ip = Column(String(20))
-    last_login_dt = Column(DateTime)
-    created_dt = Column(DateTime, default=datetime.now)
-    updated_dt = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    last_login_dt = Column(DateTime(timezone=True))
+    created_dt = Column(DateTime(timezone=True), default=datetime.now)
+    updated_dt = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
     # Связь с RefreshToken
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     verification_codes = relationship("UserVerificationCode", back_populates="user", cascade="all, delete-orphan")
+
+    # Новая связь с таблицей UserTeamLink
+    user_team_links = relationship("UserTeamLink", back_populates="user", cascade="all, delete-orphan")
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -33,8 +36,8 @@ class RefreshToken(Base):
     value = Column(String(512), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     ttl_sec = Column(BigInteger, nullable=False)
-    created_dt = Column(DateTime, default=datetime.now)
-    updated_dt = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created_dt = Column(DateTime(timezone=True), default=datetime.now)
+    updated_dt = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
     user = relationship("User", back_populates="refresh_tokens")
 
@@ -46,8 +49,8 @@ class UserVerificationCode(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     email = Column(String(50), nullable=True)
     code = Column(String(6), nullable=False)
-    created_dt = Column(DateTime, default=datetime.now)
-    updated_dt = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created_dt = Column(DateTime(timezone=True), default=datetime.now)
+    updated_dt = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
     user = relationship("User", back_populates="verification_codes")
 

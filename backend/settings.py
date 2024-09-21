@@ -77,6 +77,8 @@ class Settings(BaseSettings):
     MAIL_PASSWORD: str = "ose7mgpose74g"
     EMAIL_FROM: str = "TEVAS.IO"
 
+    swagger_cookie: bool = True
+
     @property
     def db_url(self) -> URL:
         """

@@ -93,11 +93,19 @@ async def generate_verification_code(db: AsyncSession, length=6) -> str:
 
 async def set_cookie_custom(access_token: str, response) -> bool:
 
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        samesite="None",  # Для кросс-доменных запросов
-        secure=False,  # Поставь True, если используешь HTTPS
-    )
+
+    if settings.swagger_cookie: # Чтобы работала авторизация на Swagger
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+        )
+    else:
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            samesite="None",  # Для кросс-доменных запросов
+            secure=False,  # Поставь True, если используешь HTTPS
+        )
 
     return True

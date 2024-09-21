@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.responses import JSONResponse
 from uuid import UUID
 
 from backend.db.dependencies import get_db_session
@@ -28,8 +26,6 @@ from backend.services.auth.utils import generate_verification_code, set_cookie_c
 from datetime import datetime
 
 router = APIRouter()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/auth")
 
 
 @router.post("/auth")
@@ -58,7 +54,7 @@ async def login_user(
     access_token = create_access_token(user_id=str(user.id))
     await create_and_store_refresh_token(user_id=str(user.id), db=db)
 
-    set_cookie_custom(access_token, response)
+    await set_cookie_custom(access_token, response)
 
     return {"message": "Login successful"}
 
