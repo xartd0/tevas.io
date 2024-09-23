@@ -6,7 +6,7 @@ from uuid import UUID
 from .password import get_password_hash
 from backend.web.api.v1.user.schema import UserCreate, UserUpdate
 from backend.db.models.users import User, RefreshToken, UserVerificationCode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 router = APIRouter()
@@ -30,7 +30,7 @@ async def create_user(db: AsyncSession, user_create: UserCreate, ip: str) -> Use
         last_name=user_create.last_name,
         password=get_password_hash(user_create.password),
         last_login_ip=ip,
-        last_login_dt=datetime.now(),
+        last_login_dt=datetime.now(timezone.utc),
     )
     db.add(user)
     await db.commit()
@@ -120,7 +120,7 @@ async def get_active_refresh_token(db: AsyncSession, user_id: str) -> RefreshTok
     :param token_value: значение токена.
     :returns: объект RefreshToken или None, если токен не найден или не активен.
     """
-    result = await db.execute(
+    result = await db.execute(  
         select(RefreshToken)
         .filter(RefreshToken.user_id == user_id)
     )
@@ -128,7 +128,7 @@ async def get_active_refresh_token(db: AsyncSession, user_id: str) -> RefreshTok
     if refresh_token:
         # Проверяем, не истек ли refresh token
         expiration_date = refresh_token.created_dt + timedelta(seconds=refresh_token.ttl_sec)
-        if expiration_date > datetime.now():
+        if expiration_date > datetime.now(timezone.utc):
             return refresh_token
         else:
             await delete_refresh_token_for_user(db, user_id, refresh_token.value)
@@ -189,7 +189,7 @@ async def get_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str)
     :param code: Код верификации.
     :return: Объект UserVerificationCode или None, если код не найден или истек.
     """
-    expiration_time = datetime.now() - timedelta(minutes=15)
+    expiration_time = datetime.now(timezone.utc) - timedelta(minutes=15)
     result = await db.execute(
         select(UserVerificationCode)
         .filter(UserVerificationCode.user_id == user_id)

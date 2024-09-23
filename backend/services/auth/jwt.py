@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError
@@ -16,7 +16,7 @@ def create_access_token(user_id: int, expires_delta: timedelta = None) -> str:
     :returns: сгенерированный JWT токен.
     """
     to_encode = {"sub": user_id}
-    expire = datetime.now() + (
+    expire = datetime.now(timezone.utc) + (
         expires_delta
         if expires_delta
         else timedelta(minutes=settings.access_token_expire_minutes)
@@ -34,7 +34,7 @@ def create_refresh_token(user_id: int, expires_delta: timedelta = None) -> str:
     :returns: сгенерированный JWT токен обновления.
     """
     to_encode = {"sub": user_id}
-    expire = datetime.now() + (
+    expire = datetime.now(timezone.utc) + (
         expires_delta
         if expires_delta
         else timedelta(days=expires_delta)

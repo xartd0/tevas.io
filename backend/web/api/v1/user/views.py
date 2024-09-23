@@ -23,10 +23,9 @@ from backend.services.auth.crud import (
 from backend.services.auth.dependency import get_current_user
 from backend.services.auth.mail import send_reset_password_email, send_verification_email
 from backend.services.auth.utils import generate_verification_code, set_cookie_custom
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter()
-
 
 @router.post("/auth")
 async def login_user(
@@ -48,7 +47,7 @@ async def login_user(
             detail="Invalid credentials",
         )
 
-    user.last_login_dt = datetime.now()
+    user.last_login_dt = datetime.now(timezone.utc)
     await db.commit()
 
     access_token = create_access_token(user_id=str(user.id))
