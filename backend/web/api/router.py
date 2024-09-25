@@ -13,4 +13,4 @@ api_router.include_router(
 )
 api_router.include_router(docs.router, prefix=f"/{settings.api_version}", tags=["docs"])
 api_router.include_router(user.router, prefix=f"/{settings.api_version}/user", tags=["user"])
-api_router.include_router(teams.router, prefix=f"/{settings.api_version}/teams", tags=["teams"])
+api_router.include_router(teams.router, prefix=f"/{settings.api_version}/", tags=["teams"])
