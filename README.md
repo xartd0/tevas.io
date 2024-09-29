@@ -1,13 +1,26 @@
-# backend
 
-This project was generated using fastapi_template.
+# Backend Project Documentation
 
-## Poetry
+This backend project is built using **FastAPI** and **Poetry** for dependency management. It includes API endpoints for user management, team operations, and monitoring, with robust configurations for running in different environments.
 
-This project uses poetry. It's a modern dependency management
-tool.
+## Table of Contents
+1. [Installation and Running](#installation-and-running)
+   - [Poetry](#poetry)
+   - [Docker](#docker)
+2. [Project Structure](#project-structure)
+3. [Configuration](#configuration)
+4. [API Endpoints](#api-endpoints)
+5. [Migrations](#migrations)
+6. [Testing](#testing)
+7. [Pre-commit Hooks](#pre-commit)
 
-To run the project use this set of commands:
+## Installation and Running
+
+### Poetry
+
+This project uses **Poetry** for dependency management.
+
+To set up and run the project locally, use the following commands:
 
 ```bash
 poetry install
@@ -16,148 +29,178 @@ poetry run python -m backend
 
 This will start the server on the configured host.
 
-You can find swagger documentation at `/api/docs`.
+- Swagger documentation can be accessed at: `/api/docs`.
+- Read more about **Poetry** here: [Poetry Documentation](https://python-poetry.org/).
 
-You can read more about poetry here: https://python-poetry.org/
+### Docker
 
-## Docker
-
-You can start the project with docker using this command:
+You can start the project using **Docker** with this command:
 
 ```bash
 docker compose up --build
 ```
 
-If you want to develop in docker with autoreload and exposed ports add `-f deploy/docker-compose.dev.yml` to your docker command.
-Like this:
+For development with autoreload and exposed ports, add `-f deploy/docker-compose.dev.yml`:
 
 ```bash
 docker compose -f docker-compose.yml -f deploy/docker-compose.dev.yml --project-directory . up --build
 ```
 
-This command exposes the web application on port 8000, mounts current directory and enables autoreload.
-
-But you have to rebuild image every time you modify `poetry.lock` or `pyproject.toml` with this command:
-
+- This command exposes the web application on port 8000, mounts the current directory, and enables autoreload.
+- You must rebuild the image every time you modify `poetry.lock` or `pyproject.toml` with the command:
+  
 ```bash
 docker compose build
 ```
 
-## Project structure
+## Project Structure
+
+The project structure is organized as follows:
 
 ```bash
-$ tree "backend"
-backend
-├── conftest.py  # Fixtures for all tests.
-├── db  # module contains db configurations
-│   ├── dao  # Data Access Objects. Contains different classes to interact with database.
-│   └── models  # Package contains different models for ORMs.
-├── __main__.py  # Startup script. Starts uvicorn.
-├── services  # Package for different external services such as rabbit or redis etc.
-├── settings.py  # Main configuration settings for project.
-├── static  # Static content.
-├── tests  # Tests for project.
-└── web  # Package contains web server. Handlers, startup config.
-    ├── api  # Package with all handlers.
-    │   └── router.py  # Main router.
-    ├── application.py  # FastAPI application configuration.
-    └── lifespan.py  # Contains actions to perform on startup and shutdown.
+backend/
+├── conftest.py        # Fixtures for all tests.
+├── db                 # Database configurations and models
+│   ├── dao            # Data Access Objects (interact with the database).
+│   └── models         # ORM models.
+├── __main__.py        # Startup script (starts uvicorn).
+├── services           # External services like RabbitMQ or Redis.
+├── settings.py        # Main project settings.
+├── static             # Static content.
+├── tests              # Tests for the project.
+└── web                # Web server configuration and API handlers.
+    ├── api # API routes and handlers.
+    │   │
+    │   v1 # Api version      
+    │   └── router.py  # Main API router.
+    ├── application.py # FastAPI application configuration.
+    └── lifespan.py    # Startup and shutdown lifecycle events.
 ```
 
 ## Configuration
 
-This application can be configured with environment variables.
+This application can be configured using environment variables.
 
-You can create `.env` file in the root directory and place all
-environment variables here. 
+1. Create a `.env` file in the root directory.
+2. Environment variables should start with the `BACKEND_` prefix.
 
-All environment variables should start with "BACKEND_" prefix.
+For example, if you have a variable `random_parameter` in `backend/settings.py`, you would configure it in `.env` as:
 
-For example if you see in your "backend/settings.py" a variable named like
-`random_parameter`, you should provide the "BACKEND_RANDOM_PARAMETER" 
-variable to configure the value. This behaviour can be changed by overriding `env_prefix` property
-in `backend.settings.Settings.Config`.
+```bash
+BACKEND_RANDOM_PARAMETER="your_value"
+```
 
-An example of .env file:
+Example `.env` file:
+
 ```bash
 BACKEND_RELOAD="True"
 BACKEND_PORT="8000"
 BACKEND_ENVIRONMENT="dev"
 ```
 
-You can read more about BaseSettings class here: https://pydantic-docs.helpmanual.io/usage/settings/
+Read more about Pydantic's **BaseSettings** class [here](https://pydantic-docs.helpmanual.io/usage/settings/).
 
-## Pre-commit
+## API Endpoints
 
-To install pre-commit simply run inside the shell:
-```bash
-pre-commit install
-```
+The following API endpoints are available in the project:
 
-pre-commit is very useful to check your code before publishing it.
-It's configured using .pre-commit-config.yaml file.
+### User Endpoints
 
-By default it runs:
-* black (formats your code);
-* mypy (validates types);
-* ruff (spots possible bugs);
+- **POST** `/api/v1/user/auth`: Authenticate a user.
+- **GET** `/api/v1/user/me`: Get current user info.
+- **GET** `/api/v1/user/{id}`: Get user details by user ID.
+- **PATCH** `/api/v1/user/settings`: Update user settings.
+- **POST** `/api/v1/user/settings/email/confirm`: Confirm user's email address.
+- **POST** `/api/v1/user`: Create a new user.
+- **POST** `/api/v1/user/verify/send`: Send verification email.
+- **POST** `/api/v1/user/verify`: Verify user.
+- **POST** `/api/v1/user/password/reset/send`: Send password reset email.
+- **POST** `/api/v1/user/password/reset`: Reset user password.
 
+### Team Endpoints
 
-You can read more about pre-commit here: https://pre-commit.com/
+- **POST** `/api/v1/team`: Create a new team.
+- **PUT** `/api/v1/team`: Update an existing team.
+- **GET** `/api/v1/team/{team_id}`: Get details of a team by team ID.
+- **DELETE** `/api/v1/team/{team_id}`: Delete a team by team ID.
+- **GET** `/api/v1/teams`: Get list of all teams for the user.
+
+### Monitoring and Metrics
+
+- **GET** `/api/v1/monitoring/health`: Health check for the service.
+- **GET** `/metrics`: Expose service metrics.
 
 ## Migrations
 
-If you want to migrate your database, you should run following commands:
+For database migrations, use Alembic.
+
+### Applying Migrations
+
+To run all migrations or until a specific revision ID:
+
 ```bash
-# To run all migrations until the migration with revision_id.
 alembic upgrade "<revision_id>"
-
-# To perform all pending migrations.
-alembic upgrade "head"
 ```
 
-### Reverting migrations
+To apply all pending migrations:
 
-If you want to revert migrations, you should run:
 ```bash
-# revert all migrations up to: revision_id.
-alembic downgrade <revision_id>
-
-# Revert everything.
- alembic downgrade base
+alembic upgrade head
 ```
 
-### Migration generation
+### Reverting Migrations
 
-To generate migrations you should run:
+To revert to a specific migration:
+
 ```bash
-# For automatic change detection.
+alembic downgrade "<revision_id>"
+```
+
+To revert all migrations:
+
+```bash
+alembic downgrade base
+```
+
+### Generating Migrations
+
+- For automatic change detection:
+
+```bash
 alembic revision --autogenerate
+```
 
-# For empty file generation.
+- For generating an empty migration file:
+
+```bash
 alembic revision
 ```
 
+## Running Tests
 
-## Running tests
+You can run the tests either locally or in Docker.
 
-If you want to run it in docker, simply run:
+### Running Tests Locally
+
+1. Start a PostgreSQL database, for example using Docker:
+
+```bash
+docker run -p "5432:5432" -e "POSTGRES_PASSWORD=backend" -e "POSTGRES_USER=backend" -e "POSTGRES_DB=backend" postgres:16.3-bullseye
+```
+
+2. Run the tests using pytest:
+
+```bash
+pytest -vv .
+```
+
+### Running Tests in Docker
+
+To run tests inside a Docker container:
 
 ```bash
 docker compose run --build --rm api pytest -vv .
 docker compose down
 ```
 
-For running tests on your local machine.
-1. you need to start a database.
 
-I prefer doing it with docker:
-```
-docker run -p "5432:5432" -e "POSTGRES_PASSWORD=backend" -e "POSTGRES_USER=backend" -e "POSTGRES_DB=backend" postgres:16.3-bullseye
-```
-
-
-2. Run the pytest.
-```bash
-pytest -vv .
-```
