@@ -71,11 +71,11 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str] = None
     sentry_sample_rate: float = 1.0
 
-    MAIL_SERVER: str = "147.45.143.110"
+    MAIL_SERVER: str = ""
     MAIL_PORT: int = 587
-    MAIL_USERNAME: str = "noreply@tevas.io"
-    MAIL_PASSWORD: str = "ose7mgpose74g"
-    EMAIL_FROM: str = "noreply@tevas.io"
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    EMAIL_FROM: str = ""
 
     swagger_cookie: bool = True
 
