@@ -92,9 +92,28 @@ BACKEND_RANDOM_PARAMETER="your_value"
 Example `.env` file:
 
 ```bash
+# GLobal configuration
 BACKEND_RELOAD="True"
 BACKEND_PORT="8000"
 BACKEND_ENVIRONMENT="dev"
+
+# Database configuration
+BACKEND_DB_HOST=localhost
+BACKEND_DB_PORT=5432
+BACKEND_DB_USER=backend
+BACKEND_DB_PASS=backend
+BACKEND_DB_BASE=backend
+BACKEND_DB_ECHO=False
+
+# Mail configuration
+BACKEND_MAIL_SERVER=
+BACKEND_MAIL_PORT=
+BACKEND_MAIL_USERNAME=
+BACKEND_MAIL_PASSWORD=
+BACKEND_EMAIL_FROM=
+
+# JWT configuration
+BACKEND_SECRET_KEY=
 ```
 
 Read more about Pydantic's **BaseSettings** class [here](https://pydantic-docs.helpmanual.io/usage/settings/).

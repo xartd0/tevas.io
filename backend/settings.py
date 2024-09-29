@@ -5,6 +5,7 @@ from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from yarl import URL
+from pydantic import Field
 
 TEMP_DIR = Path(gettempdir())
 
@@ -33,7 +34,7 @@ class Settings(BaseSettings):
 
     api_version: str = "v1"
 
-    secret_key: str = "CIsOLKIMErNencErseUbIdeCTaLdnArYPosTen"
+    secret_key: str = Field(env="BACKEND_SECRET_KEY")
     algorithm: str = "HS256"
 
     access_token_expire_minutes: int = 15
@@ -49,13 +50,13 @@ class Settings(BaseSettings):
 
     log_level: LogLevel = LogLevel.INFO
     # Variables for the database
-    db_host: str = "localhost"
-    db_port: int = 5432
-    db_user: str = "backend"
-    db_pass: str = "backend"
-    db_base: str = "backend"
-    db_echo: bool = False
-
+    db_host: str = Field(default="localhost", env="BACKEND_DB_HOST")
+    db_port: int = Field(default=5432, env="BACKEND_DB_PORT")
+    db_user: str = Field(env="BACKEND_DB_USER")
+    db_pass: str = Field(env="BACKEND_DB_PASS")
+    db_base: str = Field(env="BACKEND_DB_BASE")
+    db_echo: bool = Field(default=False, env="BACKEND_DB_ECHO")
+    
     # Variables for Redis
     redis_host: str = "backend-redis"
     redis_port: int = 6379
@@ -71,11 +72,11 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str] = None
     sentry_sample_rate: float = 1.0
 
-    MAIL_SERVER: str = ""
-    MAIL_PORT: int = 587
-    MAIL_USERNAME: str = ""
-    MAIL_PASSWORD: str = ""
-    EMAIL_FROM: str = ""
+    MAIL_SERVER: str = Field(env="BACKEND_MAIL_SERVER")
+    MAIL_PORT: int = Field(default=587, env="BACKEND_MAIL_PORT")
+    MAIL_USERNAME: str = Field(env="BACKEND_MAIL_USERNAME")
+    MAIL_PASSWORD: str = Field(env="BACKEND_MAIL_PASSWORD")
+    EMAIL_FROM: str = Field(env="BACKEND_EMAIL_FROM")
 
     swagger_cookie: bool = True
 
