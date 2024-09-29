@@ -12,7 +12,6 @@ This backend project is built using **FastAPI** and **Poetry** for dependency ma
 4. [API Endpoints](#api-endpoints)
 5. [Migrations](#migrations)
 6. [Testing](#testing)
-7. [Pre-commit Hooks](#pre-commit)
 
 ## Installation and Running
 
