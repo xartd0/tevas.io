@@ -6,6 +6,7 @@ from uuid import UUID
 from .password import get_password_hash
 from backend.web.api.v1.user.schema import UserCreate, UserUpdate
 from backend.db.models.users import User, RefreshToken, UserVerificationCode
+from backend.db.models.teams import UserTeamLink, Team
 from datetime import datetime, timedelta, timezone
 import uuid
 
@@ -255,3 +256,5 @@ async def get_user_by_code(db: AsyncSession, code: str) -> User:
         .filter(UserVerificationCode.code == code)
     )
     return result.scalar_one_or_none()
+
+

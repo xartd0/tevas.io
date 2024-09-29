@@ -290,3 +290,4 @@ async def reset_password(
 
     await update_user_password(db, user, new_password)
     return {"message": "Password reset successful"}
+

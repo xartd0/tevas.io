@@ -4,7 +4,7 @@ from backend.web.api.v1.teams.schema import TeamResponse, UpdateTeamRequest, Cre
 from backend.db.dependencies import get_db_session
 from backend.services.auth.dependency import get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.services.teams.crud import create_team, get_team, update_team, delete_team
+from backend.services.teams.crud import create_team, get_team, update_team, delete_team, get_teams_by_user_id
 
 router = APIRouter()
 
@@ -94,3 +94,15 @@ async def delete_team_endpoint(
     if not deleted:
         raise HTTPException(status_code=404, detail="Team not found")
     return {"detail": "Team deleted successfully"}
+
+
+@router.get("/teams")
+async def get_user_teams(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Возвращает список команд пользователя.
+    """
+    teams = await get_teams_by_user_id(db, current_user.id)
+    return teams

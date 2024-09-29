@@ -4,6 +4,9 @@ from sqlalchemy.future import select
 from sqlalchemy import delete, update
 from backend.db.models.teams import Team, UserTeamLink
 from backend.web.api.v1.teams.schema import UpdateTeamRequest
+from sqlalchemy import func
+from backend.web.api.v1.teams.schema import TeamUserResponse
+from typing import List
 from uuid import UUID
 
 async def create_team(title: str, user_id: UUID, session: AsyncSession) -> UUID:
@@ -131,3 +134,45 @@ async def delete_team(team_id: UUID, user_id: UUID, session: AsyncSession) -> bo
     await session.commit()
     
     return result.rowcount > 0
+
+
+async def get_teams_by_user_id(db: AsyncSession, user_id: UUID) -> List[TeamUserResponse]:
+    """
+    Получает список команд, в которых состоит пользователь, и возвращает данные в формате TeamUserResponse.
+
+    :param db: Сессия базы данных.
+    :param user_id: ID пользователя.
+    :return: Список команд в формате TeamUserResponse.
+    """
+
+    # Запрос для получения всех команд, связанных с пользователем
+    result = await db.execute(
+        select(
+            Team.id.label('team_id'),
+            Team.title,
+            Team.status_id,
+            func.count(UserTeamLink.user_id).label('amount_of_users'),
+            UserTeamLink.role.label('my_role_id'),
+            Team.created_dt,
+            Team.updated_dt
+        )
+        .join(UserTeamLink, UserTeamLink.team_id == Team.id)
+        .filter(UserTeamLink.user_id == user_id)
+        .group_by(Team.id, UserTeamLink.role)
+    )
+
+    teams = result.all()
+
+    # Преобразуем результат в список объектов TeamUserResponse
+    return [
+        TeamUserResponse(
+            team_id=team.team_id,
+            title=team.title,
+            status_id=team.status_id,
+            amount_of_users=team.amount_of_users,
+            my_role_id=team.my_role_id,
+            created_dt=team.created_dt.isoformat(),
+            updated_dt=team.updated_dt.isoformat()
+        )
+        for team in teams
+    ]

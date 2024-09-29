@@ -28,3 +28,12 @@ class TeamResponse(BaseModel):
     updated_dt: str
     users: List[UserRole]
     # projects: List[dict]
+
+class TeamUserResponse(BaseModel):
+    team_id: UUID
+    title: str
+    status_id: int
+    amount_of_users: int
+    my_role_id: int
+    created_dt: str
+    updated_dt: str
