@@ -29,7 +29,11 @@ class User(Base):
     # Новая связь с таблицей UserTeamLink
     user_team_links = relationship("UserTeamLink", back_populates="user", cascade="all, delete-orphan")
 
+    def __repr__(self):
+        return f"<User(id={self.id}, login={self.login}, email={self.email})>"
+
 class RefreshToken(Base):
+
     __tablename__ = "refresh_tokens"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -40,6 +44,9 @@ class RefreshToken(Base):
     updated_dt = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
     user = relationship("User", back_populates="refresh_tokens")
+
+    def __repr__(self):
+        return f"<RefreshToken(id={self.id}, user_id={self.user_id})>"
 
 
 class UserVerificationCode(Base):
@@ -53,4 +60,7 @@ class UserVerificationCode(Base):
     updated_dt = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
     user = relationship("User", back_populates="verification_codes")
+
+    def __repr__(self):
+        return f"<UserVerificationCode(id={self.id}, user_id={self.user_id})>"
 

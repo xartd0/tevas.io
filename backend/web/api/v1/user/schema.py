@@ -5,7 +5,15 @@ from uuid import UUID
 
 class UserCreate(BaseModel):
     """
-    Модель для создания пользователя.
+    Схема для создания пользователя.
+    
+    Аргументы:
+        first_name: Имя.
+        last_name: Фамилия.
+        login: Логин.
+        email: Email.
+        password: Пароль.
+        team_id: Идентификатор команды.
     """
     first_name: str
     last_name: str
@@ -17,7 +25,11 @@ class UserCreate(BaseModel):
 
 class UserLogin(BaseModel):
     """
-    Модель для авторизации пользователя.
+    Схема для авторизации пользователя.
+    
+    Аргументы:
+        login: Логин.
+        password: Пароль.
     """
     login: str
     password: str
@@ -25,7 +37,12 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     """
-    Модель для создания пользователя.
+    Схема для создания пользователя.
+    
+    Аргументы:
+        login: Логин.
+        email: Email.
+        team_id: Идентификатор команды.
     """
     login: str
     email: EmailStr
@@ -37,7 +54,15 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     """
-    Модель для обновления данных пользователя.
+    Схема для обновления данных пользователя.
+    
+    Аргументы:
+        login: Логин.
+        email: Email.
+        password: Новый пароль.
+        current_password: Старый пароль.
+        first_name: Имя.
+        last_name: Фамилия.
     """
     login: Optional[str] = None
     email: Optional[str] = None
@@ -49,7 +74,19 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     """
-    Модель для ответа с данными пользователя.
+    Схема для ответа с данными пользователя.
+    
+    Аргументы:
+        id: Идентификатор.
+        login: Логин.
+        email: Email.
+        status_id: Статус.
+        last_login_ip: IP последнего входа.
+        last_login_dt: Дата последнего входа.
+        first_name: Имя.
+        last_name: Фамилия.
+        created_dt: Дата создания.
+        updated_dt: Дата обновления.
     """
     id: UUID
     login: str
@@ -67,4 +104,10 @@ class UserResponse(BaseModel):
 
 
 class VerificationCode(BaseModel):
+    """
+    Схема для верификации.
+    
+    Аргументы:
+        code: Код.
+    """
     code: str

@@ -2,12 +2,14 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete, update
-from backend.db.models.teams import Team, UserTeamLink
+from backend.db.models.teams import Team, UserTeamLink, Invitation
 from backend.web.api.v1.teams.schema import UpdateTeamRequest
 from sqlalchemy import func
 from backend.web.api.v1.teams.schema import TeamUserResponse
 from typing import List
 from uuid import UUID
+import uuid
+from datetime import datetime
 
 async def create_team(title: str, user_id: UUID, session: AsyncSession) -> UUID:
     """
@@ -135,7 +137,6 @@ async def delete_team(team_id: UUID, user_id: UUID, session: AsyncSession) -> bo
     
     return result.rowcount > 0
 
-
 async def get_teams_by_user_id(db: AsyncSession, user_id: UUID) -> List[TeamUserResponse]:
     """
     Получает список команд, в которых состоит пользователь, и возвращает данные в формате TeamUserResponse.
@@ -176,3 +177,146 @@ async def get_teams_by_user_id(db: AsyncSession, user_id: UUID) -> List[TeamUser
         )
         for team in teams
     ]
+
+async def get_user_role_in_team(db: AsyncSession, user_id: uuid.UUID, team_id: uuid.UUID) -> int:
+    """
+    Проверяет роль пользователя в команде.
+
+    Аргументы:
+        db: Сессия базы данных.
+        user_id: Идентификатор пользователя (UUID).
+        team_id: Идентификатор команды (UUID).
+
+    Возвращает:
+        Роль пользователя (int) или None, если пользователь не состоит в команде.
+    """
+    result = await db.execute(select(UserTeamLink.role).where(UserTeamLink.user_id == user_id, UserTeamLink.team_id == team_id))
+    return result.scalar()
+
+
+async def create_invitation(db: AsyncSession, team_id: UUID, role_id: int, inviting_user_id: UUID, ttl_sec: int) -> Invitation:
+    """
+    Создает новое приглашение в команду.
+
+    Аргументы:
+        db: Сессия базы данных.
+        team_id: Идентификатор команды.
+        role_id: Идентификатор роли.
+        inviting_user_id: Идентификатор приглашающего пользователя.
+        ttl_sec: Время жизни ссылки в секундах.
+
+    Возвращает:
+        Объект Invitation.
+
+    Исключения:
+        HTTPException: Если пользователь не в команде или его роль меньше 2.
+    """
+    # Создаем приглашение
+    new_invitation = Invitation(
+        team_id=team_id,
+        role_id=role_id,
+        inviting_user_id=inviting_user_id,
+        ttl_sec=ttl_sec,
+        created_dt=datetime.now()
+    )
+    db.add(new_invitation)
+    await db.commit()
+    await db.refresh(new_invitation)
+    return new_invitation
+
+async def get_invitation_by_id(db: AsyncSession, invitation_id: uuid.UUID) -> Invitation:
+    """
+    Получает приглашение по его идентификатору.
+
+    Аргументы:
+        db: Сессия базы данных.
+        invitation_id: Уникальный идентификатор приглашения (UUID).
+
+    Возвращает:
+        Объект Invitation, если найдено, иначе None.
+    """
+    result = await db.execute(select(Invitation).where(Invitation.id == invitation_id))
+    return result.scalars().first()
+
+async def deactivate_invitation(db: AsyncSession, invitation: Invitation) -> None:
+    """
+    Деактивирует приглашение.
+
+    Аргументы:
+        db: Сессия базы данных.
+        invitation: Объект Invitation, который нужно деактивировать.
+    """
+    invitation.is_active = False
+    await db.commit()
+
+async def add_user_to_team(db: AsyncSession, user_id: UUID, team_id: UUID, role_id: int) -> UserTeamLink:
+    """
+    Добавляет пользователя в команду.
+
+    Аргументы:
+        db: Сессия базы данных.
+        user_id: Идентификатор пользователя (UUID).
+        team_id: Идентификатор команды (UUID).
+        role_id: Роль пользователя в команде (int).
+
+    Возвращает:
+        Объект UserTeamLink.
+    """
+    user_team_link = UserTeamLink(
+        user_id=user_id,
+        team_id=team_id,
+        role=role_id
+    )
+    db.add(user_team_link)
+    await db.commit()
+    await db.refresh(user_team_link)
+    return user_team_link
+
+async def get_invitations_by_team(db: AsyncSession, team_id: UUID) -> list[Invitation]:
+    """
+    Возвращает список всех приглашений для указанной команды.
+
+    Аргументы:
+        db: Сессия базы данных.
+        team_id: Идентификатор команды (UUID).
+
+    Возвращает:
+        Список объектов Invitation.
+    """
+    result = await db.execute(select(Invitation).where(Invitation.team_id == team_id))
+    return result.scalars().all()
+
+async def deactivate_invitation_by_id(db: AsyncSession, invitation_id: UUID) -> None:
+    """
+    Деактивирует приглашение по его идентификатору.
+
+    Аргументы:
+        db: Сессия базы данных.
+        invitation_id: Идентификатор приглашения (UUID).
+    """
+    result = await db.execute(select(Invitation).where(Invitation.id == invitation_id))
+    invitation = result.scalar_one_or_none()
+
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    # Деактивируем приглашение
+    invitation.is_active = False
+    await db.commit()
+
+async def delete_invitation(db: AsyncSession, invitation_id: UUID) -> None:
+    """
+    Удаляет приглашение из базы данных.
+
+    Аргументы:
+        db: Сессия базы данных.
+        invitation_id: Идентификатор приглашения (UUID).
+    """
+    result = await db.execute(select(Invitation).where(Invitation.id == invitation_id))
+    invitation = result.scalar_one_or_none()
+
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    await db.delete(invitation)
+    await db.commit()
