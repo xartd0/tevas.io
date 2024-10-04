@@ -142,6 +142,12 @@ The following API endpoints are available in the project:
 - **GET** `/api/v1/team/{team_id}`: Get details of a team by team ID.
 - **DELETE** `/api/v1/team/{team_id}`: Delete a team by team ID.
 - **GET** `/api/v1/teams`: Get list of all teams for the user.
+- **POST** `/api/v1/team/invitation`: Send an invitation to a new member.
+- **GET** `/api/v1/team/invitation/{invitation_id}`: Get details of an invitation.
+- **GET** `/api/v1/team/{team_id}/invitations`: Get list of all invitations for a team.
+- **PUT** `/api/v1/team/invitation/{invitation_id}/toggle`: Toggle the status of an invitation.
+- **DELETE** `/api/v1/team/invitation/{invitation_id}/delete`: Delete an invitation.
+
 
 ### Monitoring and Metrics
 
