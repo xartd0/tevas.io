@@ -157,6 +157,7 @@ The following API endpoints are available in the project:
 
 - **GET** `/api/v1/monitoring/health`: Health check for the service.
 - **GET** `/metrics`: Expose service metrics.
+- **GET** `/api/v1/docs`: Swagger
 
 ## Migrations
 
