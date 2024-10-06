@@ -119,3 +119,18 @@ class UpdateAppearance(BaseModel):
     """
     theme_is_light: bool
     main_color_hex: Optional[str] = None
+
+
+class EmailResetPassword(BaseModel):
+    """
+    Схема для восстановления пароля по email.
+    """
+    email: EmailStr
+
+
+class RestDataRequest(BaseModel):
+    """
+    Схема для восстановления пароля по email.
+    """
+    code: str
+    new_password: str

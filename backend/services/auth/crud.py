@@ -194,7 +194,7 @@ async def get_verification_code(db: AsyncSession, user_id: uuid.UUID, code: str)
     :param code: Код верификации.
     :return: Объект UserVerificationCode или None, если код не найден или истек.
     """
-    expiration_time = datetime.now(timezone.utc) - timedelta(minutes=15)
+    expiration_time = datetime.now() - timedelta(minutes=15)
     result = await db.execute(
         select(UserVerificationCode)
         .filter(UserVerificationCode.user_id == user_id)

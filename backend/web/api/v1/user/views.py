@@ -8,7 +8,7 @@ from backend.services.auth.utils import (
     authenticate_user,
     create_and_store_refresh_token,
 )
-from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin, VerificationCode, UpdateAppearance
+from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin, VerificationCode, UpdateAppearance, EmailResetPassword, RestDataRequest
 from backend.services.auth.crud import (
     get_user_by_login,
     create_user,
@@ -161,7 +161,7 @@ async def update_user_settings(
 
 @router.post("/settings/email/confirm", summary="Подтверждение нового email пользователя")
 async def confirm_new_email(
-    code: str,
+    code: VerificationCode,
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -175,7 +175,9 @@ async def confirm_new_email(
     :raises: HTTPException с кодом 400, если код неверен или истек.
     """
     # Проверка верификационного кода
-    verification_code = await get_verification_code(db, current_user.id, code)
+    print(current_user.id, code.code)
+    verification_code = await get_verification_code(db, current_user.id, code.code)
+    print(verification_code)
     if not verification_code:
         raise HTTPException(status_code=400, detail="Invalid or expired verification code")
 
@@ -257,13 +259,13 @@ async def verify_user(
 
 @router.post("/password/reset/send", summary="Отправка кода сброса пароля")
 async def send_reset_password_code(
-    email: str,
+    email: EmailResetPassword,
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Отправляет код для сброса пароля на email пользователя.
     """
-    user = await get_user_by_email(db, email)
+    user = await get_user_by_email(db, email.email)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -275,22 +277,21 @@ async def send_reset_password_code(
 
 @router.post("/password/reset", summary="Сброс пароля")
 async def reset_password(
-    code: str,
-    new_password: str,
+    reset_data: RestDataRequest,
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Сбрасывает пароль пользователя по коду.
     """
-    user = await get_user_by_code(db, code)
+    user = await get_user_by_code(db, reset_data.code)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    reset_code = await get_verification_code(db, user.id, code)
+    reset_code = await get_verification_code(db, user.id, reset_data.code)
     if not reset_code:
         raise HTTPException(status_code=400, detail="Invalid or expired code")
 
-    await update_user_password(db, user, new_password)
+    await update_user_password(db, user, reset_data.new_password)
     return {"message": "Password reset successful"}
 
 

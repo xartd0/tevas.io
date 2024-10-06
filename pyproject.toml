@@ -36,6 +36,7 @@ taskiq-fastapi = "^0"
     pyzmq = "^26"
 python-jose = "^3.3.0"
 passlib = "^1.7.4"
+pytest-mock = "^3.14.0"
 
 
 [tool.poetry.group.dev.dependencies]
