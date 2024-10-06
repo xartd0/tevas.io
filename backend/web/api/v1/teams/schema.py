@@ -12,6 +12,7 @@ class UserRole(BaseModel):
         role_id: Идентификатор роли.
     """
     user_id: UUID
+    login: str
     role_id: int  # Роль в команде: 0 = чтение, 1 = редактирование, 2 = админ, 3 = создатель
 
 class ProjectID(BaseModel):
@@ -164,3 +165,25 @@ class DeactivateInvitationResponse(BaseModel):
         message: Сообщение о результате операции.
     """
     message: str
+
+
+class UpdateUserRoleInTeamRequest(BaseModel):
+    """
+    Схема для обновления роли пользователя в команде.
+
+    Аргументы:
+        user_id: Идентификатор пользователя.
+        role_id: Новый идентификатор роли.
+    """
+    team_id: UUID
+    user_id: UUID
+    role_id: int
+
+class UpdateTeamSettingsRequest(BaseModel):
+    """
+    Схема для обновления настроек команды.
+
+    Аргументы:
+        title: Новое название команды.
+    """
+    title: str

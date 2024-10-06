@@ -29,8 +29,13 @@ class User(Base):
     # Новая связь с таблицей UserTeamLink
     user_team_links = relationship("UserTeamLink", back_populates="user", cascade="all, delete-orphan")
 
+    # Связь с Appearance
+    appearance = relationship("Appearance", uselist=False, back_populates="user")
+
+
     def __repr__(self):
         return f"<User(id={self.id}, login={self.login}, email={self.email})>"
+
 
 class RefreshToken(Base):
 
@@ -64,3 +69,16 @@ class UserVerificationCode(Base):
     def __repr__(self):
         return f"<UserVerificationCode(id={self.id}, user_id={self.user_id})>"
 
+
+class Appearance(Base):
+    __tablename__ = "appearance"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    theme_is_light = Column(Boolean, nullable=False)
+    main_color_hex = Column(String(7), nullable=False)
+
+    user = relationship("User", back_populates="appearance")
+
+    def __repr__(self):
+        return f"<Appearance(id={self.id}, user_id={self.user_id})>"

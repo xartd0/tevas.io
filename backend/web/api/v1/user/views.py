@@ -8,7 +8,7 @@ from backend.services.auth.utils import (
     authenticate_user,
     create_and_store_refresh_token,
 )
-from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin, VerificationCode
+from backend.web.api.v1.user.schema import UserCreate, UserResponse, UserUpdate, UserLogin, VerificationCode, UpdateAppearance
 from backend.services.auth.crud import (
     get_user_by_login,
     create_user,
@@ -18,7 +18,8 @@ from backend.services.auth.crud import (
     update_user_status,
     update_user_password,
     get_user_by_email,
-    get_user_by_code
+    get_user_by_code,
+    update_appearance_settings
 )
 from backend.services.auth.dependency import get_current_user
 from backend.services.auth.mail import send_reset_password_email, send_verification_email
@@ -27,7 +28,7 @@ from datetime import datetime, timezone
 
 router = APIRouter()
 
-@router.post("/auth")
+@router.post("/auth", summary="Авторизация пользователя")
 async def login_user(
     form_data: UserLogin,
     db: AsyncSession = Depends(get_db_session),
@@ -58,7 +59,7 @@ async def login_user(
     return {"message": "Login successful"}
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse, summary="Получение информации о себе")
 async def get_current_user_info(
     current_user = Depends(get_current_user),
     response: Response = None  # Добавляем Response как зависимость
@@ -67,7 +68,7 @@ async def get_current_user_info(
     return current_user
 
 
-@router.get("/{id}", response_model=UserResponse)
+@router.get("/{id}", response_model=UserResponse, summary="Получение информации о пользователе")
 async def get_user_info(
     id: UUID, 
     db: AsyncSession = Depends(get_db_session),
@@ -86,7 +87,7 @@ async def get_user_info(
     return user
 
 
-@router.patch("/settings")
+@router.patch("/settings", summary="Обновление настроек пользователя")
 async def update_user_settings(
     user_update: UserUpdate,
     current_user = Depends(get_current_user),
@@ -158,7 +159,7 @@ async def update_user_settings(
     return current_user
 
 
-@router.post("/settings/email/confirm")
+@router.post("/settings/email/confirm", summary="Подтверждение нового email пользователя")
 async def confirm_new_email(
     code: str,
     current_user = Depends(get_current_user),
@@ -187,7 +188,7 @@ async def confirm_new_email(
     return {"message": "Email updated successfully"}
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, summary="Регистрация нового пользователя")
 async def register_user(
     user_create: UserCreate,
     request: Request,
@@ -223,8 +224,7 @@ async def register_user(
     return {"message": "Registration successful", "access_token": access_token}
 
 
-
-@router.post("/verify/send")
+@router.post("/verify/send", summary="Отправка кода верификации")
 async def send_verification_code(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
@@ -237,7 +237,8 @@ async def send_verification_code(
     await send_verification_email(current_user.email, code)
     return {"message": "Verification code sent"}
 
-@router.post("/verify")
+
+@router.post("/verify", summary="Подтверждение верификации")
 async def verify_user(
     code: VerificationCode,
     current_user=Depends(get_current_user),
@@ -253,7 +254,8 @@ async def verify_user(
     await update_user_status(db, current_user, status_id=1)
     return {"message": "User verified"}
 
-@router.post("/password/reset/send")
+
+@router.post("/password/reset/send", summary="Отправка кода сброса пароля")
 async def send_reset_password_code(
     email: str,
     db: AsyncSession = Depends(get_db_session)
@@ -270,7 +272,8 @@ async def send_reset_password_code(
     await send_reset_password_email(user.email, code)
     return {"message": "Reset password code sent"}
 
-@router.post("/password/reset")
+
+@router.post("/password/reset", summary="Сброс пароля")
 async def reset_password(
     code: str,
     new_password: str,
@@ -279,7 +282,6 @@ async def reset_password(
     """
     Сбрасывает пароль пользователя по коду.
     """
-
     user = await get_user_by_code(db, code)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -291,3 +293,19 @@ async def reset_password(
     await update_user_password(db, user, new_password)
     return {"message": "Password reset successful"}
 
+
+@router.patch("/appearance", summary="Сохранение темы и цвета")
+async def update_appearance(
+    appearance_update: UpdateAppearance,
+    db: AsyncSession = Depends(get_db_session),
+    current_user=Depends(get_current_user)
+):
+    """
+    Сохраняет тему для модели Appearance.
+    """
+    user = await get_user_by_id(db, current_user.id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await update_appearance_settings(db, user, appearance_update)
+    return {"message": "Theme saved"}

@@ -10,6 +10,7 @@ from typing import List
 from uuid import UUID
 import uuid
 from datetime import datetime
+from sqlalchemy.orm import selectinload
 
 async def create_team(title: str, user_id: UUID, session: AsyncSession) -> UUID:
     """
@@ -52,7 +53,11 @@ async def get_team(team_id: UUID, session: AsyncSession):
         return None
 
     # Получаем связанные данные о пользователях и проектах
-    users = await session.execute(select(UserTeamLink).where(UserTeamLink.team_id == team_id))
+    users = await session.execute(
+        select(UserTeamLink)
+        .options(selectinload(UserTeamLink.user))  # Use selectinload to load the related users
+        .where(UserTeamLink.team_id == team_id)
+    )
     # projects = await session.execute(select(TeamProjectLink).where(TeamProjectLink.team_id == team_id))
 
     team_data = {
@@ -61,9 +66,10 @@ async def get_team(team_id: UUID, session: AsyncSession):
         "status_id": team.status_id,
         "created_dt": team.created_dt.isoformat(),
         "updated_dt": team.updated_dt.isoformat(),
-        "users": [{"user_id": link.user_id, "role_id": link.role} for link in users.scalars()],
+        "users": [{"user_id": link.user_id, "role_id": link.role, "login": link.user.login} for link in users.scalars()],
         # "projects": [{"project_id": link.project_id} for link in projects.scalars()]
     }
+    print(team_data)
     return team_data
 
 async def update_team(request: UpdateTeamRequest, user_id: UUID, session: AsyncSession):
@@ -164,7 +170,6 @@ async def get_teams_by_user_id(db: AsyncSession, user_id: UUID) -> List[TeamUser
 
     teams = result.all()
 
-    # Преобразуем результат в список объектов TeamUserResponse
     return [
         TeamUserResponse(
             team_id=team.team_id,
@@ -190,7 +195,7 @@ async def get_user_role_in_team(db: AsyncSession, user_id: uuid.UUID, team_id: u
     Возвращает:
         Роль пользователя (int) или None, если пользователь не состоит в команде.
     """
-    result = await db.execute(select(UserTeamLink.role).where(UserTeamLink.user_id == user_id, UserTeamLink.team_id == team_id))
+    result = await db.execute(select(UserTeamLink).where(UserTeamLink.user_id == user_id, UserTeamLink.team_id == team_id))
     return result.scalar()
 
 
@@ -319,4 +324,16 @@ async def delete_invitation(db: AsyncSession, invitation_id: UUID) -> None:
         raise HTTPException(status_code=404, detail="Invitation not found")
 
     await db.delete(invitation)
+    await db.commit()
+
+
+async def delete_user_from_team(db: AsyncSession, user_to_delete: UserTeamLink) -> None:
+    """
+    Удаляет пользователя из команды.
+
+    Аргументы:
+        db: Сессия базы данных.
+        user_to_delete: Объект UserTeamLink, который нужно удалить.
+    """
+    await db.delete(user_to_delete)
     await db.commit()

@@ -124,10 +124,11 @@ The following API endpoints are available in the project:
 
 ### User Endpoints
 
-- **POST** `/api/v1/user/auth`: Authenticate a user.
 - **GET** `/api/v1/user/me`: Get current user info.
 - **GET** `/api/v1/user/{id}`: Get user details by user ID.
 - **PATCH** `/api/v1/user/settings`: Update user settings.
+- **PATCH** `/api/v1/user/appearance`: Update user appearance.
+- **POST** `/api/v1/user/auth`: Authenticate a user.
 - **POST** `/api/v1/user/settings/email/confirm`: Confirm user's email address.
 - **POST** `/api/v1/user`: Create a new user.
 - **POST** `/api/v1/user/verify/send`: Send verification email.
@@ -140,13 +141,16 @@ The following API endpoints are available in the project:
 - **POST** `/api/v1/team`: Create a new team.
 - **PUT** `/api/v1/team`: Update an existing team.
 - **GET** `/api/v1/team/{team_id}`: Get details of a team by team ID.
-- **DELETE** `/api/v1/team/{team_id}`: Delete a team by team ID.
 - **GET** `/api/v1/teams`: Get list of all teams for the user.
 - **POST** `/api/v1/team/invitation`: Send an invitation to a new member.
 - **GET** `/api/v1/team/invitation/{invitation_id}`: Get details of an invitation.
 - **GET** `/api/v1/team/{team_id}/invitations`: Get list of all invitations for a team.
 - **PUT** `/api/v1/team/invitation/{invitation_id}/toggle`: Toggle the status of an invitation.
 - **DELETE** `/api/v1/team/invitation/{invitation_id}/delete`: Delete an invitation.
+- **DELETE** `/api/v1/team/{team_id}/user/{user_id}`: Delete user from a team.
+- **DELETE** `/api/v1/team/{team_id}`: Delete a team by team ID.
+- **PUT** `/api/v1/team/{team_id}/user/{user_id}`: Update user role in a team.
+- **PUT** `/api/v1/team/{team_id}/settings`: Update team settings.
 
 
 ### Monitoring and Metrics

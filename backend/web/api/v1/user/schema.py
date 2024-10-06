@@ -111,3 +111,11 @@ class VerificationCode(BaseModel):
         code: Код.
     """
     code: str
+
+
+class UpdateAppearance(BaseModel):
+    """
+    Схема для изменения темы и цвета.
+    """
+    theme_is_light: bool
+    main_color_hex: Optional[str] = None

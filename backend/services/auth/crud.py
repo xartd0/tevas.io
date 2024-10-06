@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from uuid import UUID
 from .password import get_password_hash
-from backend.web.api.v1.user.schema import UserCreate, UserUpdate
-from backend.db.models.users import User, RefreshToken, UserVerificationCode
-from backend.db.models.teams import UserTeamLink, Team
+from backend.web.api.v1.user.schema import UserCreate, UserUpdate, UpdateAppearance
+from backend.db.models.users import User, RefreshToken, UserVerificationCode, Appearance
 from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import selectinload
 import uuid
 
 router = APIRouter()
@@ -46,7 +46,11 @@ async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User:
     :param user_id: идентификатор пользователя.
     :returns: найденный пользователь или None.
     """
-    result = await db.execute(select(User).filter(User.id == user_id))
+    result = await db.execute(
+        select(User)
+        .filter(User.id == user_id)
+        .options(selectinload(User.appearance))
+    )
     return result.scalar_one_or_none()
 
 async def get_user_by_login(db: AsyncSession, login: str) -> User:
@@ -258,3 +262,21 @@ async def get_user_by_code(db: AsyncSession, code: str) -> User:
     return result.scalar_one_or_none()
 
 
+async def update_appearance_settings(db: AsyncSession, user: User, appearance_update: UpdateAppearance):
+    """
+    Обновляет настройки внешнего вида пользователя.
+
+    :param db: Сессия базы данных.
+    :param user: Объект User.
+    :param appearance_update: Новые настройки внешнего вида.
+    """
+    appearance = user.appearance
+    if appearance is None:
+        appearance = Appearance(user_id=user.id,
+                                theme_is_light=appearance_update.theme_is_light,
+                                main_color_hex=appearance_update.main_color_hex)
+        db.add(appearance)
+    else:
+        for field, value in appearance_update:
+            setattr(appearance, field, value)
+    await db.commit()
