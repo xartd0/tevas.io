@@ -57,23 +57,92 @@ docker compose build
 The project structure is organized as follows:
 
 ```bash
-backend/
-├── conftest.py        # Fixtures for all tests.
-├── db                 # Database configurations and models
-│   ├── dao            # Data Access Objects (interact with the database).
-│   └── models         # ORM models.
-├── __main__.py        # Startup script (starts uvicorn).
-├── services           # External services like RabbitMQ or Redis.
-├── settings.py        # Main project settings.
-├── static             # Static content.
-├── tests              # Tests for the project.
-└── web                # Web server configuration and API handlers.
-    ├── api # API routes and handlers.
-    │   │
-    │   v1 # Api version      
-    │   └── router.py  # Main API router.
-    ├── application.py # FastAPI application configuration.
-    └── lifespan.py    # Startup and shutdown lifecycle events.
+├── alembic.ini                      # Configuration file for Alembic (database migrations)
+├── backend                          # Main directory for the server-side of the application
+│   ├── db                           # Module for database operations
+│   │   ├── base.py                  # Base classes and functions for database operations
+│   │   ├── dependencies.py          # Dependencies for database operations
+│   │   ├── meta.py                  # Database metadata
+│   │   ├── migrations               # Directory for database migrations
+│   │   │   ├── env.py              # Environment for executing migrations
+│   │   │   ├── __init__.py          # Initialization for the migrations package
+│   │   │   └── script.py.mako       # Template for generating migrations
+│   │   ├── models                   # Directory for database models
+│   │   │   ├── __init__.py          # Initialization for the models package
+│   │   │   ├── projects.py          # Model for projects
+│   │   │   ├── teams.py             # Model for teams
+│   │   │   └── users.py             # Model for users
+│   │   └── utils.py                 # Utilities for database operations
+│   ├── exceptions                   # Directory for exception handling
+│   │   └── main.py                  # Main exceptions for the application
+│   ├── gunicorn_runner.py           # Script for running the application with Gunicorn
+│   ├── __init__.py                  # Initialization for the backend package
+│   ├── log.py                       # Logging for the application
+│   ├── __main__.py                  # Main script for running the application
+│   ├── services                     # Directory for business logic and services
+│   │   ├── auth                     # Module for authentication and authorization
+│   │   │   ├── crud.py              # CRUD operations for authentication
+│   │   │   ├── dependency.py        # Dependencies for authentication
+│   │   │   ├── __init__.py          # Initialization for the authentication package
+│   │   │   ├── jwt.py               # JWT token management
+│   │   │   ├── mail.py              # Email sending
+│   │   │   ├── password.py          # Password management
+│   │   │   └── utils.py             # Utilities for authentication
+│   │   ├── __init__.py              # Initialization for the services package
+│   │   ├── redis                    # Module for Redis operations
+│   │   │   ├── dependency.py        # Dependencies for Redis
+│   │   │   ├── __init__.py          # Initialization for the Redis package
+│   │   │   └── lifespan.py          # Lifespan for Redis
+│   │   └── teams                     # Module for team operations
+│   │       └── crud.py               # CRUD operations for teams
+│   ├── settings.py                   # Settings for the application
+│   ├── static                        # Static files
+│   │   └── docs                      # Documentation
+│   │       ├── redoc.standalone.js   # JavaScript file for Redoc
+│   │       ├── swagger-ui-bundle.js   # JavaScript file for Swagger UI
+│   │       └── swagger-ui.css        # CSS file for Swagger UI
+│   ├── tkq.py                        # Script for task queue operations
+│   └── web                           # Directory for API routes and views
+│       ├── api                       # API routes
+│       │   ├── __init__.py           # Initialization for the API package
+│       │   ├── router.py             # Main API router
+│       │   └── v1                    # API version 1
+│       │       ├── docs               # API documentation
+│       │       │   ├── __init__.py    # Initialization for the documentation package
+│       │       │   └── views.py       # Views for documentation
+│       │       ├── monitoring         # Monitoring
+│       │       │   ├── __init__.py    # Initialization for the monitoring package
+│       │       │   └── views.py       # Views for monitoring
+│       │       ├── redis              # Redis API
+│       │       │   ├── __init__.py    # Initialization for the Redis API package
+│       │       │   ├── schema.py      # Schemas for the Redis API
+│       │       │   └── views.py       # Views for the Redis API
+│       │       ├── teams               # Teams API
+│       │       │   ├── __init__.py    # Initialization for the teams API package
+│       │       │   ├── schema.py      # Schemas for the teams API
+│       │       │   └── views.py       # Views for the teams API
+│       │       └── user               # Users API
+│       │           ├── __init__.py    # Initialization for the users API package
+│       │           ├── schema.py      # Schemas for the users API
+│       │           └── views.py       # Views for the users API
+│       ├── application.py             # Main FastAPI application
+│       ├── __init__.py                # Initialization for the web package
+│       └── lifespan.py                # Lifespan for the application
+├── deploy                            # Directory for deployment
+│   └── docker-compose.dev.yml        # Docker Compose configuration for development
+├── docker-compose.yml                # Docker Compose configuration
+├── Dockerfile                        # Dockerfile for building the Docker image
+├── git                               # Directory for Git (e.g., hooks)
+├── poetry.lock                       # Poetry lock file for dependencies
+├── pyproject.toml                    # Configuration file for Poetry
+├── README.md                         # Project documentation
+└── tests                             # Directory for tests
+    ├── conftest.py                    # Configuration for pytest
+    ├── __init__.py                    # Initialization for the tests package
+    ├── test_backend.py                # Tests for the backend
+    ├── test_echo.py                   # Tests for the echo service
+    ├── test_redis.py                  # Tests for Redis
+    └── test_users.py                  # Tests for users
 ```
 
 ## Configuration

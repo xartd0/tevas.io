@@ -64,29 +64,6 @@ async def get_team_endpoint(
     return team
 
 
-@router.put("/team", response_model=TeamResponse, summary="Изменение данных команды")
-async def update_team_endpoint(
-    request: UpdateTeamRequest, 
-    db: AsyncSession = Depends(get_db_session),
-    current_user = Depends(get_current_user)
-):
-    """
-    Изменение данных команды.
-
-    Аргументы:
-    - request (UpdateTeamRequest): Данные для обновления команды (id, title, status, users, projects).
-    - db (AsyncSession): Сессия базы данных, полученная через Depends.
-    - current_user (User): Текущий пользователь, полученный через Depends.
-
-    Возвращает:
-    - TeamResponse: Обновленные данные команды.
-    """
-    updated_team = await update_team(request, current_user.id, db)
-    if not updated_team:
-        raise HTTPException(status_code=404, detail="Team not found")
-    return updated_team
-
-
 @router.delete("/team/{team_id}", response_model=dict, summary="Удаление команды")
 async def delete_team_endpoint(
     team_id: UUID, 
