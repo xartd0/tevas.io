@@ -12,6 +12,7 @@ This backend project is built using **FastAPI** and **Poetry** for dependency ma
 4. [API Endpoints](#api-endpoints)
 5. [Migrations](#migrations)
 6. [Testing](#testing)
+7. [Urls](#urls)
 
 ## Installation and Running
 
@@ -301,4 +302,10 @@ docker compose run --build --rm api pytest -vv .
 docker compose down
 ```
 
+## URLs
+
+- `api.localhost/api/v1/docs` - Main API Swagger
+- `grafana.localhost:3000` - Grafana
+- `prometheus.localhost:9090` - Prometheus
+- `jaeger.localhost:16686` - Jaeger UI
 

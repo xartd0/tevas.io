@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   api: &main_app
     build:
@@ -8,9 +10,8 @@ services:
     env_file:
       - .env
     labels:
-      # Enables traefik for this container.
       - traefik.enable=true
-      - traefik.http.routers.backend.rule=Host(`${BACKEND_TRAEFIK_HOST:-backend.localhost}`)
+      - traefik.http.routers.backend.rule=Host(`${BACKEND_TRAEFIK_HOST:-api.localhost}`)
       - traefik.http.routers.backend.entrypoints=http
       - traefik.http.routers.backend.service=backend
       - traefik.http.services.backend.loadbalancer.server.port=${BACKEND_PORT:-8000}
@@ -38,6 +39,8 @@ services:
       - taskiq
       - worker
       - backend.tkq:broker
+    ports:
+      - "8001:8001" 
 
   db:
     image: postgres:16.3-bullseye
@@ -55,21 +58,9 @@ services:
       timeout: 3s
       retries: 40
     ports:
-      - "5432:5432"  
-
-  migrator:
-    image: backend:${BACKEND_VERSION:-latest}
-    restart: "no"
-    command: alembic upgrade head
-    environment:
-      BACKEND_DB_HOST: backend-db
-      BACKEND_DB_PORT: 5432
-      BACKEND_DB_USER: backend
-      BACKEND_DB_PASS: backend
-      BACKEND_DB_BASE: backend
-    depends_on:
-      db:
-        condition: service_healthy
+      - "5432:5432"
+    networks:
+      - default
 
   redis:
     image: bitnami/redis:6.2.5
@@ -82,14 +73,75 @@ services:
       interval: 1s
       timeout: 3s
       retries: 50
+    networks:
+      - default
 
+  # Traefik
+  traefik:
+    image: traefik:v2.9
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.http.address=:80
+      - --entrypoints.prometheus.address=:9090
+      - --metrics.prometheus=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+    ports:
+      - "80:80"
+      - "8080:8080"
+    networks:
+      - traefik-shared
+      - default
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
+  prometheus:
+    image: prom/prometheus:v2.31.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - traefik-shared
+      - default
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - traefik-shared
+      - default
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.21
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    networks:
+      - default
 
 volumes:
   backend-db-data:
     name: backend-db-data
+  grafana-storage:
+    name: grafana-storage
+  opensearch-data:
+    name: opensearch-data
 
 networks:
-  # Network for traefik.
   traefik-shared:
     name: traefik-shared
