@@ -87,14 +87,26 @@ services:
       - --metrics.prometheus=true
       - --metrics.prometheus.addEntryPointsLabels=true
       - --metrics.prometheus.addServicesLabels=true
+      - --accesslog=true
+      - --accesslog.bufferingsize=100
+      - --accesslog.fields.defaultmode=keep
+      - --accesslog.filepath=/var/log/traefik-access.log
+      - --tracing.jaeger=true
+      - --tracing.jaeger.samplingServerURL=http://jaeger:5778/sampling 
+      - --tracing.jaeger.localAgentHostPort=jaeger:6831  
+      - --tracing.jaeger.samplingType=const
+      - --tracing.jaeger.samplingParam=1.0
     ports:
       - "80:80"
       - "8080:8080"
+    depends_on:
+      - jaeger
     networks:
       - traefik-shared
       - default
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /var/log:/var/log
 
   prometheus:
     image: prom/prometheus:v2.31.1
@@ -131,8 +143,14 @@ services:
       - "14268:14268"
       - "14250:14250"
       - "9411:9411"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - default
+    
 
 volumes:
   backend-db-data:
